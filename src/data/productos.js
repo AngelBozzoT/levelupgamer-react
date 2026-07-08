@@ -1,0 +1,137 @@
+/**
+ * Catálogo oficial de Level-Up Gamer.
+ * Este array es la semilla inicial; los datos reales viven en localStorage
+ * y son gestionados a través de db.js.
+ */
+export const CATALOGO_SEMILLA = [
+  {
+    codigo: "JM001",
+    titulo: "Catan",
+    categoria: "Juegos de Mesa",
+    precio: 29990,
+    descuento: 0,
+    stock: 25,
+    stockCritico: 5,
+    imagen: "https://i5.walmartimages.com/asr/a1863816-7553-441d-ad37-734a716ed55a.00a63b9153c188bd583dbfd05b191f90.jpeg",
+    descripcion: "El célebre juego de estrategia, negociación y colonización. Reúne materias primas, construye pueblos y expande tus dominios.",
+    destacado: true,
+  },
+  {
+    codigo: "JM002",
+    titulo: "Carcassonne",
+    categoria: "Juegos de Mesa",
+    precio: 24990,
+    descuento: 15,
+    stock: 18,
+    stockCritico: 5,
+    imagen: "https://i5.walmartimages.cl/asr/5e0f858c-e687-4f05-8726-ac9a2d46296c.7c1b8264366f4112b169ce70a23e8531.jpeg",
+    descripcion: "Crea tu propio mapa medieval loseta a loseta, desplegando a tus seguidores como caballeros, bandidos o monjes.",
+    destacado: false,
+  },
+  {
+    codigo: "AC001",
+    titulo: "Control Xbox Series X",
+    categoria: "Accesorios",
+    precio: 59990,
+    descuento: 0,
+    stock: 30,
+    stockCritico: 8,
+    imagen: "https://i5.walmartimages.cl/asr/e53427b4-1133-4a53-93c8-9774f0385073.ad9f942fce2f82f3b36e538ba0c8dd5b.jpeg",
+    descripcion: "Diseño modernizado con superficies esculpidas. Compatible con Xbox, PC y dispositivos móviles.",
+    destacado: true,
+  },
+  {
+    codigo: "AC002",
+    titulo: "Auriculares HyperX Cloud II",
+    categoria: "Accesorios",
+    precio: 79990,
+    descuento: 10,
+    stock: 4,
+    stockCritico: 5,
+    imagen: "https://http2.mlstatic.com/D_NQ_NP_953165-CBT112200835901_052026-O.webp",
+    descripcion: "Sonido envolvente 7.1 virtual con micrófono desmontable con cancelación de ruido.",
+    destacado: false,
+  },
+  {
+    codigo: "CO001",
+    titulo: "PlayStation 5",
+    categoria: "Consolas",
+    precio: 549990,
+    descuento: 0,
+    stock: 6,
+    stockCritico: 3,
+    imagen: "https://media.solotodo.com/media/products/1979309_picture_1731571228.jpg",
+    descripcion: "Consola de última generación con SSD ultra rápido, trazado de rayos y audio 3D.",
+    destacado: true,
+  },
+  {
+    codigo: "CG001",
+    titulo: "PC Gamer ASUS ROG Strix",
+    categoria: "Computadores Gamers",
+    precio: 1299990,
+    descuento: 5,
+    stock: 3,
+    stockCritico: 2,
+    imagen: "https://media.spdigital.cl/thumbnails/products/ygse9ue7_b405ce7d_thumbnail_512.jpg",
+    descripcion: "Equipo de escritorio de alto rendimiento con hardware de vanguardia para esports y streaming.",
+    destacado: false,
+  },
+  {
+    codigo: "SG001",
+    titulo: "Silla Gamer Secretlab Titan",
+    categoria: "Sillas Gamers",
+    precio: 349990,
+    descuento: 20,
+    stock: 9,
+    stockCritico: 3,
+    imagen: "https://m.media-amazon.com/images/I/410uYasNqFL._AC_UF894,1000_QL80_.jpg",
+    descripcion: "Silla ergonómica con soporte lumbar ajustable y materiales de alta calidad.",
+    destacado: false,
+  },
+  {
+    codigo: "MS001",
+    titulo: "Mouse Logitech G502 HERO",
+    categoria: "Mouse",
+    precio: 49990,
+    descuento: 0,
+    stock: 40,
+    stockCritico: 10,
+    imagen: "https://media.spdigital.cl/thumbnails/products/snbujg5__29f7dd61_thumbnail_4096.jpg",
+    descripcion: "Sensor óptico HERO 25K, 11 botones programables y pesas ajustables.",
+    destacado: true,
+  },
+  {
+    codigo: "MP001",
+    titulo: "Mousepad Razer Goliathus Chroma",
+    categoria: "Mousepad",
+    precio: 29990,
+    descuento: 0,
+    stock: 22,
+    stockCritico: 5,
+    imagen: "https://prophonechile.cl/wp-content/uploads/2023/02/goliathusex.png",
+    descripcion: "Mousepad extendido con iluminación RGB Razer Chroma sincronizada.",
+    destacado: false,
+  },
+  {
+    codigo: "PP001",
+    titulo: "Polera Level-Up Personalizada",
+    categoria: "Poleras Personalizadas",
+    precio: 14990,
+    descuento: 0,
+    stock: 50,
+    stockCritico: 10,
+    imagen: "/polera_levelup.png", // <-- Con la barra absoluta para la carpeta public
+    descripcion: "Camiseta de algodón premium con tu Gamertag o logotipo en alta definición.",
+    destacado: false,
+  },
+];
+
+export const CATEGORIAS = [
+  ...new Set(CATALOGO_SEMILLA.map((p) => p.categoria)),
+];
+
+export const formatearPrecio = (numero) =>
+  "$" + Math.round(numero).toLocaleString("es-CL");
+
+export const calcularPrecioConDescuento = (precio, descuento) =>
+  descuento > 0 ? Math.round(precio * (1 - descuento / 100)) : precio;
