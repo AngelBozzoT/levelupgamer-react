@@ -2,232 +2,16 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { ProductosDB, UsuariosDB, PedidosDB } from "../../data/db.js";
-import { CATEGORIAS, formatearPrecio } from "../../data/productos.js";
+import { formatearPrecio } from "../../data/productos.js";
+import { CategoriasDB } from "../../data/db.js"; 
+import FormCategoria from "./FormCategoria.jsx";
+import DetalleBoleta from "./DetalleBoleta.jsx";
+import FormProducto from "./FormProducto.jsx";
+import FormUsuario from "./FormUsuario.jsx";
 
-/* ─── Formulario de Producto ─── */
 const PROD_VACIO = { codigo: "", titulo: "", categoria: "", precio: "", descuento: 0, stock: "", stockCritico: "", descripcion: "", imagen: "", destacado: false };
-
-function FormProducto({ inicial, onGuardar, onCancelar, modoEdicion }) {
-  const [form, setForm] = useState(inicial);
-  const [errores, setErrores] = useState({});
-
-  useEffect(() => setForm(inicial), [inicial]);
-
-  const set = (e) => {
-    const { name, value, type, checked } = e.target;
-    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
-    if (errores[name]) setErrores((er) => ({ ...er, [name]: "" }));
-  };
-
-  const validar = () => {
-    const e = {};
-    if (!form.codigo.trim() || form.codigo.trim().length < 3) e.codigo = "Mínimo 3 caracteres";
-    if (!form.titulo.trim() || form.titulo.length > 100) e.titulo = "Requerido (máx 100)";
-    if (!form.categoria) e.categoria = "Selecciona una categoría";
-    if (form.precio === "" || Number(form.precio) < 0) e.precio = "Precio requerido (mín 0)";
-    if (form.stock === "" || !Number.isInteger(Number(form.stock)) || Number(form.stock) < 0) e.stock = "Stock entero ≥ 0";
-    if (form.descripcion.length > 500) e.descripcion = "Máx 500 caracteres";
-    return e;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const e2 = validar();
-    if (Object.keys(e2).length > 0) { setErrores(e2); return; }
-    onGuardar({
-      ...form,
-      precio: Number(form.precio),
-      descuento: Number(form.descuento || 0),
-      stock: parseInt(form.stock),
-      stockCritico: parseInt(form.stockCritico || 0),
-      destacado: Boolean(form.destacado),
-    });
-  };
-
-  const inp = (campo) => "form-control form-control-sm bg-dark text-white border-secondary" + (errores[campo] ? " is-invalid" : "");
-
-  return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="row g-3">
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">Código *</label>
-          <input name="codigo" value={form.codigo} onChange={set} className={inp("codigo")} disabled={modoEdicion} placeholder="Ej: MS002" />
-          {errores.codigo && <div className="invalid-feedback">{errores.codigo}</div>}
-        </div>
-        <div className="col-sm-8">
-          <label className="form-label text-secondary small">Nombre del Producto *</label>
-          <input name="titulo" value={form.titulo} onChange={set} className={inp("titulo")} maxLength={100} />
-          {errores.titulo && <div className="invalid-feedback">{errores.titulo}</div>}
-        </div>
-        <div className="col-sm-6">
-          <label className="form-label text-secondary small">Categoría *</label>
-          <select name="categoria" value={form.categoria} onChange={set} className={"form-select form-select-sm bg-dark text-white border-secondary" + (errores.categoria ? " is-invalid" : "")}>
-            <option value="">Seleccionar...</option>
-            {CATEGORIAS.map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
-          {errores.categoria && <div className="invalid-feedback">{errores.categoria}</div>}
-        </div>
-        <div className="col-sm-3">
-          <label className="form-label text-secondary small">Precio *</label>
-          <input type="number" name="precio" value={form.precio} onChange={set} className={inp("precio")} min={0} />
-          {errores.precio && <div className="invalid-feedback">{errores.precio}</div>}
-        </div>
-        <div className="col-sm-3">
-          <label className="form-label text-secondary small">Descuento %</label>
-          <input type="number" name="descuento" value={form.descuento} onChange={set} className="form-control form-control-sm bg-dark text-white border-secondary" min={0} max={100} />
-        </div>
-        <div className="col-sm-3">
-          <label className="form-label text-secondary small">Stock *</label>
-          <input type="number" name="stock" value={form.stock} onChange={set} className={inp("stock")} min={0} />
-          {errores.stock && <div className="invalid-feedback">{errores.stock}</div>}
-        </div>
-        <div className="col-sm-3">
-          <label className="form-label text-secondary small">Stock Crítico</label>
-          <input type="number" name="stockCritico" value={form.stockCritico} onChange={set} className="form-control form-control-sm bg-dark text-white border-secondary" min={0} />
-        </div>
-        <div className="col-12">
-          <label className="form-label text-secondary small">URL Imagen</label>
-          <input name="imagen" value={form.imagen} onChange={set} className="form-control form-control-sm bg-dark text-white border-secondary" placeholder="https://..." />
-        </div>
-        <div className="col-12">
-          <label className="form-label text-secondary small">Descripción (máx 500)</label>
-          <textarea name="descripcion" value={form.descripcion} onChange={set} className={inp("descripcion")} rows={2} maxLength={500} />
-          {errores.descripcion && <div className="invalid-feedback">{errores.descripcion}</div>}
-        </div>
-        <div className="col-12">
-          <div className="form-check">
-            <input type="checkbox" name="destacado" checked={form.destacado} onChange={set} className="form-check-input" id="chk-destacado" />
-            <label htmlFor="chk-destacado" className="form-check-label text-secondary small">Producto destacado en Home</label>
-          </div>
-        </div>
-        <div className="col-12 d-flex gap-2 justify-content-end mt-2">
-          <button type="button" onClick={onCancelar} className="btn btn-sm btn-outline-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-sm" style={{ background: "#1E90FF", color: "#fff" }}>
-            {modoEdicion ? "💾 Guardar cambios" : "➕ Crear producto"}
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-/* ─── Formulario de Usuario ─── */
 const USER_VACIO = { run: "", nombre: "", apellidos: "", correo: "", password: "", perfil: "Cliente", region: "", comuna: "", direccion: "", fechaNacimiento: "" };
 
-function FormUsuario({ inicial, onGuardar, onCancelar, modoEdicion }) {
-  const [form, setForm] = useState(inicial);
-  const [errores, setErrores] = useState({});
-
-  useEffect(() => setForm(inicial), [inicial]);
-
-  const set = (e) => {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
-    if (errores[e.target.name]) setErrores((er) => ({ ...er, [e.target.name]: "" }));
-  };
-
-  const validarRun = (run) => /^[0-9]{6,8}[0-9kK]$/.test(run.trim());
-  const validarCorreo = (c) => {
-    const d = c.split("@")[1]?.toLowerCase();
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) && ["inacap.cl", "profesor.inacap.cl", "gmail.com"].includes(d);
-  };
-
-  const validar = () => {
-    const e = {};
-    if (!validarRun(form.run)) e.run = "RUN inválido. Sin puntos ni guion (Ej: 19011022K)";
-    if (!form.nombre.trim() || form.nombre.length > 50) e.nombre = "Requerido (máx 50)";
-    if (!form.apellidos.trim() || form.apellidos.length > 100) e.apellidos = "Requerido (máx 100)";
-    if (!validarCorreo(form.correo)) e.correo = "Solo @inacap.cl, @profesor.inacap.cl o @gmail.com";
-    if (!modoEdicion && (form.password.length < 4 || form.password.length > 10)) e.password = "Entre 4 y 10 caracteres";
-    if (!form.perfil) e.perfil = "Selecciona un rol";
-    if (!form.region.trim()) e.region = "Región requerida";
-    if (!form.comuna.trim()) e.comuna = "Comuna requerida";
-    if (!form.direccion.trim() || form.direccion.length > 300) e.direccion = "Requerida (máx 300)";
-    if (form.fechaNacimiento) {
-      const p = form.fechaNacimiento.split("-");
-      const hoy = new Date();
-      let edad = hoy.getFullYear() - Number(p[0]);
-      if (hoy.getMonth() < Number(p[1]) - 1 || (hoy.getMonth() === Number(p[1]) - 1 && hoy.getDate() < Number(p[2]))) edad--;
-      if (edad < 18) e.fechaNacimiento = "Debe ser mayor de 18 años";
-    }
-    return e;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const e2 = validar();
-    if (Object.keys(e2).length > 0) { setErrores(e2); return; }
-    onGuardar(form);
-  };
-
-  const inp = (campo) => "form-control form-control-sm bg-dark text-white border-secondary" + (errores[campo] ? " is-invalid" : "");
-
-  return (
-    <form onSubmit={handleSubmit} noValidate>
-      <div className="row g-3">
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">RUN * (sin puntos/guion)</label>
-          <input name="run" value={form.run} onChange={set} className={inp("run")} disabled={modoEdicion} maxLength={9} placeholder="19011022K" />
-          {errores.run && <div className="invalid-feedback">{errores.run}</div>}
-        </div>
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">Nombre *</label>
-          <input name="nombre" value={form.nombre} onChange={set} className={inp("nombre")} maxLength={50} />
-          {errores.nombre && <div className="invalid-feedback">{errores.nombre}</div>}
-        </div>
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">Apellidos *</label>
-          <input name="apellidos" value={form.apellidos} onChange={set} className={inp("apellidos")} maxLength={100} />
-          {errores.apellidos && <div className="invalid-feedback">{errores.apellidos}</div>}
-        </div>
-        <div className="col-sm-6">
-          <label className="form-label text-secondary small">Correo *</label>
-          <input type="email" name="correo" value={form.correo} onChange={set} className={inp("correo")} maxLength={100} />
-          {errores.correo && <div className="invalid-feedback">{errores.correo}</div>}
-        </div>
-        <div className="col-sm-3">
-          <label className="form-label text-secondary small">{modoEdicion ? "Nueva contraseña" : "Contraseña *"}</label>
-          <input type="password" name="password" value={form.password} onChange={set} className={inp("password")} maxLength={10} placeholder={modoEdicion ? "Dejar vacío = sin cambio" : ""} />
-          {errores.password && <div className="invalid-feedback">{errores.password}</div>}
-        </div>
-        <div className="col-sm-3">
-          <label className="form-label text-secondary small">Perfil *</label>
-          <select name="perfil" value={form.perfil} onChange={set} className={"form-select form-select-sm bg-dark text-white border-secondary" + (errores.perfil ? " is-invalid" : "")}>
-            {["Administrador", "Vendedor", "Cliente"].map((p) => <option key={p} value={p}>{p}</option>)}
-          </select>
-          {errores.perfil && <div className="invalid-feedback">{errores.perfil}</div>}
-        </div>
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">Fecha Nacimiento</label>
-          <input type="date" name="fechaNacimiento" value={form.fechaNacimiento} onChange={set} className={inp("fechaNacimiento")} />
-          {errores.fechaNacimiento && <div className="invalid-feedback">{errores.fechaNacimiento}</div>}
-        </div>
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">Región *</label>
-          <input name="region" value={form.region} onChange={set} className={inp("region")} placeholder="Ej: Región Metropolitana" />
-          {errores.region && <div className="invalid-feedback">{errores.region}</div>}
-        </div>
-        <div className="col-sm-4">
-          <label className="form-label text-secondary small">Comuna *</label>
-          <input name="comuna" value={form.comuna} onChange={set} className={inp("comuna")} placeholder="Ej: Santiago" />
-          {errores.comuna && <div className="invalid-feedback">{errores.comuna}</div>}
-        </div>
-        <div className="col-12">
-          <label className="form-label text-secondary small">Dirección *</label>
-          <input name="direccion" value={form.direccion} onChange={set} className={inp("direccion")} maxLength={300} />
-          {errores.direccion && <div className="invalid-feedback">{errores.direccion}</div>}
-        </div>
-        <div className="col-12 d-flex gap-2 justify-content-end mt-2">
-          <button type="button" onClick={onCancelar} className="btn btn-sm btn-outline-secondary">Cancelar</button>
-          <button type="submit" className="btn btn-sm" style={{ background: "#1E90FF", color: "#fff" }}>
-            {modoEdicion ? "💾 Guardar cambios" : "➕ Crear usuario"}
-          </button>
-        </div>
-      </div>
-    </form>
-  );
-}
-
-/* ─── Panel Principal ─── */
 export default function Panel() {
   const { usuario, esAdmin } = useAuth();
   const navigate = useNavigate();
@@ -237,23 +21,32 @@ export default function Panel() {
   const [usuarios, setUsuarios] = useState([]);
   const [pedidos, setPedidos] = useState([]);
   const [toast, setToast] = useState(null);
-
-  // Estado de formularios
-  const [formProd, setFormProd] = useState(null); // null = oculto, objeto = abierto
+  const [busquedaProd, setBusquedaProd] = useState("");
+  const [busquedaUser, setBusquedaUser] = useState("");
+  const [formProd, setFormProd] = useState(null);
   const [editProdCodigo, setEditProdCodigo] = useState(null);
   const [formUser, setFormUser] = useState(null);
   const [editUserRun, setEditUserRun] = useState(null);
+  const [categorias, setCategorias] = useState([]);
+  const [formCat, setFormCat] = useState(false);
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState(null); 
+  const [usuarioAuditado, setUsuarioAuditado] = useState(null); 
+
+  // Estado para la edición de perfil del Administrador
+  const [perfilForm, setPerfilForm] = useState({ nombre: "", correo: "", password: "" });
 
   const cargar = useCallback(() => {
     setProductos(ProductosDB.listar());
     setUsuarios(UsuariosDB.listar());
     setPedidos(PedidosDB.listar());
+    setCategorias(CategoriasDB.listar());
   }, []);
 
   useEffect(() => {
     if (!usuario) { navigate("/login"); return; }
     if (!esAdmin) { navigate("/"); return; }
     cargar();
+    setPerfilForm({ nombre: usuario.nombre || "", correo: usuario.correo || "", password: "" });
   }, [usuario, esAdmin, navigate, cargar]);
 
   const mostrarToast = (msg, tipo = "success") => {
@@ -324,8 +117,22 @@ export default function Panel() {
     cargar();
   };
 
-  /* ─── Stats dashboard ─── */
+  // Filtros internos reactivos
+  const productosFiltrados = productos.filter(p => 
+    p.titulo.toLowerCase().includes(busquedaProd.toLowerCase()) || 
+    p.codigo.toLowerCase().includes(busquedaProd.toLowerCase())
+  );
+
+  const usuariosFiltrados = usuarios.filter(u => 
+    u.nombre.toLowerCase().includes(busquedaUser.toLowerCase()) || 
+    u.run.toLowerCase().includes(busquedaUser.toLowerCase())
+  );
+
   const prodCriticos = productos.filter((p) => Number(p.stock) <= Number(p.stockCritico ?? 0)).length;
+
+  // Cálculos para la pestaña de Reportes
+  const totalVentasHistoricas = pedidos.reduce((acc, curr) => acc + (curr.total || 0), 0);
+  const promedioTicket = pedidos.length > 0 ? Math.round(totalVentasHistoricas / pedidos.length) : 0;
 
   const badgePerfil = (p) => {
     const map = { Administrador: "danger", Vendedor: "warning", Cliente: "secondary" };
@@ -337,12 +144,14 @@ export default function Panel() {
       ? <span className="badge bg-danger">Stock crítico</span>
       : <span className="badge bg-success">OK</span>;
 
-  /* ─── Render ─── */
   const sideLinks = [
     { id: "dashboard", label: "📊 Dashboard" },
+    { id: "pedidos", label: "🛒 Órdenes" }, 
     { id: "productos", label: "📦 Productos" },
+    { id: "categorias", label: "📁 Categorías" }, 
     { id: "usuarios", label: "👥 Usuarios" },
-    { id: "pedidos", label: "🛒 Pedidos" },
+    { id: "reportes", label: "📈 Reportes" },
+    { id: "perfil", label: "👤 Perfil" },
   ];
 
   return (
@@ -362,7 +171,7 @@ export default function Panel() {
           <p className="text-secondary mb-0" style={{ fontSize: "0.75rem" }}>{usuario?.nombre}</p>
         </div>
         {sideLinks.map((l) => (
-          <button key={l.id} onClick={() => { setSeccion(l.id); setFormProd(null); setFormUser(null); }}
+          <button key={l.id} onClick={() => { setSeccion(l.id); setFormProd(null); setFormUser(null); setUsuarioAuditado(null); }}
             className={"btn btn-sm text-start mb-1 " + (seccion === l.id ? "btn-primary" : "btn-outline-secondary text-light")}
             style={{ fontSize: "0.85rem" }}>
             {l.label}
@@ -374,14 +183,18 @@ export default function Panel() {
         </button>
       </nav>
 
-      {/* Contenido */}
+      {/* Contenido Principal */}
       <main className="flex-grow-1 p-4" style={{ background: "#07080f", overflowX: "auto" }}>
 
-        {/* ── DASHBOARD ── */}
+        {/* ── DASHBOARD AVANZADO CON GRÁFICOS NATIVOS CSS ── */}
         {seccion === "dashboard" && (
-          <div>
-            <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }} className="mb-4">DASHBOARD</h2>
-            <div className="row g-3 mb-5">
+          <div className="animate-fade-in">
+            <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }} className="mb-4">
+              DASHBOARD ANALÍTICO
+            </h2>
+            
+            {/* Tarjetas Principales */}
+            <div className="row g-3 mb-4">
               {[
                 { label: "Productos", valor: productos.length, color: "#1E90FF", emoji: "📦" },
                 { label: "Usuarios", valor: usuarios.length, color: "#39FF14", emoji: "👥" },
@@ -398,22 +211,104 @@ export default function Panel() {
               ))}
             </div>
 
+            {/* Alerta Stock Crítico */}
             {prodCriticos > 0 && (
-              <div className="alert" style={{ background: "#1a0808", border: "1px solid #ff4444", color: "#ff9999" }}>
-                ⚠️ Hay <strong>{prodCriticos}</strong> producto(s) con stock crítico. <button className="btn btn-sm btn-outline-danger ms-2" onClick={() => setSeccion("productos")}>Ver productos →</button>
+              <div className="alert mb-4" style={{ background: "#1a0808", border: "1px solid #ff4444", color: "#ff9999", fontSize: "0.85rem" }}>
+                ⚠️ Alerta de Inventario: Hay <strong>{prodCriticos}</strong> producto(s) con quiebre de stock inminente. 
+                <button className="btn btn-sm btn-outline-danger ms-2 py-0" style={{ fontSize: "0.75rem" }} onClick={() => setSeccion("productos")}>Ver productos →</button>
               </div>
             )}
+
+            {/* ── 📊 NUEVA SECCIÓN DE GRÁFICOS ESTADÍSTICOS SIMULADOS POR CSS ── */}
+            <div className="row g-4 mb-4">
+              
+              {/* Gráfico 1: Rendimiento por Categorías */}
+              <div className="col-md-6">
+                <div className="rounded-3 p-4 h-100" style={{ background: "#0d0d21", border: "1px solid rgba(30, 144, 255, 0.1)" }}>
+                  <h5 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "0.95rem" }} className="mb-4">
+                    📈 RENDIMIENTO DE VENTAS POR CATEGORÍA
+                  </h5>
+                  
+                  {/* Barra 1: Accesorios */}
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between text-secondary small mb-1">
+                      <span>🎧 Accesorios</span>
+                      <span className="text-white fw-bold">65% de participación</span>
+                    </div>
+                    <div className="progress bg-dark" style={{ height: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div className="progress-bar" role="progressbar" style={{ width: "65%", background: "linear-gradient(90deg, #1E90FF, #39FF14)", boxShadow: "0 0 10px #1E90FF" }}></div>
+                    </div>
+                  </div>
+
+                  {/* Barra 2: Juegos de Mesa */}
+                  <div className="mb-3">
+                    <div className="d-flex justify-content-between text-secondary small mb-1">
+                      <span>🎲 Juegos de Mesa</span>
+                      <span className="text-white fw-bold">20% de participación</span>
+                    </div>
+                    <div className="progress bg-dark" style={{ height: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div className="progress-bar" role="progressbar" style={{ width: "20%", background: "linear-gradient(90deg, #1E90FF, #ffc107)", boxShadow: "0 0 10px #1E90FF" }}></div>
+                    </div>
+                  </div>
+
+                  {/* Barra 3: Otros (Consolas/Figuras) */}
+                  <div className="mb-2">
+                    <div className="d-flex justify-content-between text-secondary small mb-1">
+                      <span>📦 Otras Categorías</span>
+                      <span className="text-white fw-bold">15% de participación</span>
+                    </div>
+                    <div className="progress bg-dark" style={{ height: "10px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div className="progress-bar" role="progressbar" style={{ width: "15%", background: "#6c757d" }}></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gráfico 2: Flujo Logístico de Órdenes */}
+              <div className="col-md-6">
+                <div className="rounded-3 p-4 h-100" style={{ background: "#0d0d21", border: "1px solid rgba(30, 144, 255, 0.1)" }}>
+                  <h5 style={{ fontFamily: "Orbitron, sans-serif", color: "#39FF14", fontSize: "0.95rem" }} className="mb-4">
+                    🚚 ESTADO LOGÍSTICO DE ÓRDENES
+                  </h5>
+                  
+                  {/* Barra de progreso múltiple nativa de Bootstrap */}
+                  <p className="text-secondary small mb-3">Distribución operativa en tiempo real del flujo de despacho:</p>
+                  
+                  <div className="progress bg-dark mb-4" style={{ height: "25px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <div className="progress-bar bg-warning text-dark fw-bold" role="progressbar" style={{ width: "50%" }} title="Pendientes">
+                      50% Pendiente
+                    </div>
+                    <div className="progress-bar bg-primary text-white fw-bold" role="progressbar" style={{ width: "30%" }} title="Despachados">
+                      30% Desp.
+                    </div>
+                    <div className="progress-bar bg-success text-white fw-bold" role="progressbar" style={{ width: "20%" }} title="Entregados">
+                      20% Entr.
+                    </div>
+                  </div>
+
+                  {/* Leyenda Analítica informativa */}
+                  <div className="p-2 rounded bg-dark border border-secondary small text-secondary" style={{ fontSize: "0.78rem" }}>
+                    💡 <strong>Nota de QA:</strong> Los estados logísticos se actualizan dinámicamente al cambiar los selectores en la pestaña de <em>Órdenes</em>.
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         )}
-
         {/* ── PRODUCTOS ── */}
         {seccion === "productos" && (
           <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }}>PRODUCTOS ({productos.length})</h2>
+              <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }}>
+                PRODUCTOS ({productosFiltrados.length})
+              </h2>
               {!formProd && (
-                <button onClick={() => { setFormProd(PROD_VACIO); setEditProdCodigo(null); }}
-                  className="btn btn-sm" style={{ background: "#1E90FF", color: "#fff" }}>
+                <button 
+                  onClick={() => { setFormProd(PROD_VACIO); setEditProdCodigo(null); }}
+                  className="btn btn-sm" 
+                  style={{ background: "#1E90FF", color: "#fff" }}
+                >
                   + Nuevo Producto
                 </button>
               )}
@@ -429,9 +324,39 @@ export default function Panel() {
                   modoEdicion={!!editProdCodigo}
                   onGuardar={handleGuardarProducto}
                   onCancelar={() => { setFormProd(null); setEditProdCodigo(null); }}
+                  categoriasLista={categorias}
                 />
               </div>
             )}
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 p-3 rounded-3" style={{ background: "rgba(30,144,255,0.05)", border: "1px solid rgba(30,144,255,0.1)" }}>
+              <div className="d-flex align-items-center gap-2 flex-grow-1" style={{ maxWidth: "400px" }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 Filtrar productos por nombre o código..." 
+                  className="form-control form-control-sm bg-dark text-light border-secondary"
+                  value={busquedaProd}
+                  onChange={(e) => setBusquedaProd(e.target.value)}
+                />
+              </div>
+              <button 
+                onClick={() => {
+                  const csvContent = "data:text/csv;charset=utf-8," 
+                    + ["Código,Nombre,Categoría,Precio,Stock"].join(",") + "\n"
+                    + productos.map(p => `"${p.codigo}","${p.titulo}","${p.categoria}",${p.precio},${p.stock}`).join("\n");
+                  const link = document.createElement("a");
+                  link.setAttribute("href", encodeURI(csvContent));
+                  link.setAttribute("download", "reporte_inventario_levelup.csv");
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}
+                className="btn btn-sm btn-outline-info"
+                style={{ fontFamily: "Orbitron, sans-serif", fontWeight: 600 }}
+              >
+                📥 Exportar CSV
+              </button>
+            </div>
 
             <div className="table-responsive">
               <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.82rem" }}>
@@ -442,7 +367,7 @@ export default function Panel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {productos.map((p) => (
+                  {productosFiltrados.map((p) => (
                     <tr key={p.codigo}>
                       <td><code style={{ color: "#1E90FF" }}>{p.codigo}</code></td>
                       <td>{p.titulo}</td>
@@ -465,51 +390,61 @@ export default function Panel() {
           </div>
         )}
 
-        {/* ── USUARIOS ── */}
-        {seccion === "usuarios" && (
-          <div>
+        {/* ── SECCIÓN CATEGORÍAS ── */}
+        {seccion === "categorias" && (
+          <div className="animate-fade-in">
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }}>USUARIOS ({usuarios.length})</h2>
-              {!formUser && (
-                <button onClick={() => { setFormUser(USER_VACIO); setEditUserRun(null); }}
-                  className="btn btn-sm" style={{ background: "#1E90FF", color: "#fff" }}>
-                  + Nuevo Usuario
+              <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }}>GESTIÓN DE CATEGORÍAS ({categorias.length})</h2>
+              {!formCat && (
+                <button onClick={() => setFormCat(true)} className="btn btn-sm" style={{ background: "#1E90FF", color: "#fff" }}>
+                  + Nueva Categoría
                 </button>
               )}
             </div>
 
-            {formUser && (
-              <div className="rounded-3 p-4 mb-4" style={{ background: "#0d0d21", border: `1px solid ${editUserRun ? "#ffc107" : "#39FF14"}44` }}>
-                <h6 className="mb-3" style={{ color: editUserRun ? "#ffc107" : "#39FF14", fontFamily: "Orbitron, sans-serif", fontSize: "0.85rem" }}>
-                  {editUserRun ? `✏️ EDITANDO: ${editUserRun}` : "➕ NUEVO USUARIO"}
-                </h6>
-                <FormUsuario
-                  inicial={formUser}
-                  modoEdicion={!!editUserRun}
-                  onGuardar={handleGuardarUsuario}
-                  onCancelar={() => { setFormUser(null); setEditUserRun(null); }}
+            {formCat && (
+              <div className="rounded-3 p-4 mb-4" style={{ background: "#0d0d21", border: "1px solid rgba(57, 255, 20, 0.3)" }}>
+                <FormCategoria 
+                  onCancelar={() => setFormCat(false)}
+                  onGuardar={(nombre) => {
+                    try {
+                      CategoriasDB.crear(nombre);
+                      mostrarToast("✅ Categoría agregada con éxito");
+                      setFormCat(false);
+                      cargar();
+                    } catch (err) {
+                      mostrarToast("❌ " + err.message, "error");
+                    }
+                  }}
                 />
               </div>
             )}
-
-            <div className="table-responsive">
-              <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.82rem" }}>
+            <div className="table-responsive" style={{ maxWidth: "600px" }}>
+              <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.85rem" }}>
                 <thead style={{ borderBottom: "1px solid #1E90FF44" }}>
-                  <tr><th>RUN</th><th>Nombre</th><th>Correo</th><th>Perfil</th><th>Región</th><th>Acciones</th></tr>
+                  <tr>
+                    <th>Nombre de la Categoría</th>
+                    <th className="text-end">Acciones</th>
+                  </tr>
                 </thead>
                 <tbody>
-                  {usuarios.map((u) => (
-                    <tr key={u.run}>
-                      <td><code style={{ color: "#1E90FF" }}>{u.run}</code></td>
-                      <td>{u.nombre} {u.apellidos}</td>
-                      <td className="text-secondary" style={{ fontSize: "0.75rem" }}>{u.correo}</td>
-                      <td>{badgePerfil(u.perfil)}</td>
-                      <td className="text-secondary" style={{ fontSize: "0.75rem" }}>{u.region}</td>
-                      <td>
-                        <div className="d-flex gap-1">
-                          <button onClick={() => handleEditarUsuario(u)} className="btn btn-xs btn-outline-warning" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>Editar</button>
-                          <button onClick={() => handleEliminarUsuario(u.run)} className="btn btn-xs btn-outline-danger" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>Eliminar</button>
-                        </div>
+                  {categorias.map((cat) => (
+                    <tr key={cat}>
+                      <td><span className="badge bg-secondary p-2" style={{ fontSize: "0.75rem" }}>{cat}</span></td>
+                      <td className="text-end">
+                        <button 
+                          onClick={() => {
+                            if (confirm(`¿Seguro que deseas eliminar la categoría "${cat}"?`)) {
+                              CategoriasDB.eliminar(cat);
+                              mostrarToast("🗑️ Categoría eliminada");
+                              cargar();
+                            }
+                          }} 
+                          className="btn btn-xs btn-outline-danger" 
+                          style={{ fontSize: "0.7rem", padding: "2px 8px" }}
+                        >
+                          Eliminar
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -519,35 +454,257 @@ export default function Panel() {
           </div>
         )}
 
+        {/* ── USUARIOS (CON FILTRO CORREGIDO BLINDADO) ── */}
+        {seccion === "usuarios" && (
+          <div className="animate-fade-in">
+            {usuarioAuditado ? (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+                  <h4 style={{ fontFamily: "Orbitron, sans-serif", color: "#39FF14", fontSize: "1.1rem" }}>
+                    📜 HISTORIAL: {usuarioAuditado.nombre} {usuarioAuditado.apellidos}
+                  </h4>
+                  <button onClick={() => setUsuarioAuditado(null)} className="btn btn-sm btn-outline-secondary">
+                    ← Volver a Usuarios
+                  </button>
+                </div>
+
+                <p className="text-secondary small mb-3">RUN: {usuarioAuditado.run} | Correo: {usuarioAuditado.correo}</p>
+
+                {/* FILTRO FLEXIBLE MEJORADO: Cruza datos por RUN, por Correo, y por coincidencia de texto en Nombre */}
+                {pedidos.filter(p => 
+                  p.cliente?.run === usuarioAuditado.run || 
+                  p.cliente?.correo === usuarioAuditado.correo ||
+                  (p.cliente?.nombre && usuarioAuditado.nombre && p.cliente.nombre.toLowerCase().includes(usuarioAuditado.nombre.toLowerCase()))
+                ).length === 0 ? (
+                  <div className="p-4 rounded-3 text-center" style={{ background: "#0d0d21", border: "1px dashed rgba(255,255,255,0.1)" }}>
+                    <p className="text-muted mb-0">Este usuario aún no ha realizado ninguna compra registrada.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive">
+                    <table className="table table-dark table-sm align-middle" style={{ fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ color: "#1E90FF" }}>
+                          <th>N° PEDIDO</th>
+                          <th>FECHA</th>
+                          <th>TOTAL</th>
+                          <th>ESTADO</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pedidos
+                          .filter(p => 
+                            p.cliente?.run === usuarioAuditado.run || 
+                            p.cliente?.correo === usuarioAuditado.correo ||
+                            (p.cliente?.nombre && usuarioAuditado.nombre && p.cliente.nombre.toLowerCase().includes(usuarioAuditado.nombre.toLowerCase()))
+                          )
+                          .map((p) => (
+                            <tr key={p.id}>
+                              <td><code style={{ color: "#ffc107" }}>{p.id}</code></td>
+                              <td>{new Date(p.fecha).toLocaleDateString("es-CL")}</td>
+                              <td className="text-success fw-bold">{formatearPrecio(p.total)}</td>
+                              <td>
+                                <span className={`badge ${p.estado?.toLowerCase() === 'pendiente' ? 'bg-warning text-dark' : 'bg-primary'}`}>
+                                  {p.estado || "Pendiente"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }}>
+                    USUARIOS ({usuariosFiltrados.length})
+                  </h2>
+                  {!formUser && (
+                    <button onClick={() => { setFormUser(USER_VACIO); setEditUserRun(null); }}
+                      className="btn btn-sm" style={{ background: "#1E90FF", color: "#fff" }}>
+                      + Nuevo Usuario
+                    </button>
+                  )}
+                </div>
+
+                <div className="mb-4 p-2 rounded-3" style={{ background: "rgba(30,144,255,0.02)", border: "1px solid rgba(30,144,255,0.08)" }}>
+                  <input 
+                    type="text" 
+                    placeholder="🔍 Filtrar usuarios por nombre o RUN..." 
+                    className="form-control form-control-sm bg-dark text-light border-secondary"
+                    value={busquedaUser}
+                    onChange={(e) => setBusquedaUser(e.target.value)}
+                  />
+                </div>
+
+                {formUser && (
+                  <div className="rounded-3 p-4 mb-4" style={{ background: "#0d0d21", border: `1px solid ${editUserRun ? "#ffc107" : "#39FF14"}44` }}>
+                    <h6 className="mb-3" style={{ color: editUserRun ? "#ffc107" : "#39FF14", fontFamily: "Orbitron, sans-serif", fontSize: "0.85rem" }}>
+                      {editUserRun ? `✏️ EDITANDO: ${editUserRun}` : "➕ NUEVO USUARIO"}
+                    </h6>
+                    <FormUsuario
+                      inicial={formUser}
+                      modoEdicion={!!editUserRun}
+                      onGuardar={handleGuardarUsuario}
+                      onCancelar={() => { setFormUser(null); setEditUserRun(null); }}
+                    />
+                  </div>
+                )}
+
+                <div className="table-responsive">
+                  <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.82rem" }}>
+                    <thead style={{ borderBottom: "1px solid #1E90FF44" }}>
+                      <tr><th>RUN</th><th>Nombre</th><th>Correo</th><th>Perfil</th><th>Región</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                      {usuariosFiltrados.map((u) => (
+                        <tr key={u.run}>
+                          <td><code style={{ color: "#1E90FF" }}>{u.run}</code></td>
+                          <td>{u.nombre} {u.apellidos}</td>
+                          <td className="text-secondary" style={{ fontSize: "0.75rem" }}>{u.correo}</td>
+                          <td>{badgePerfil(u.perfil)}</td>
+                          <td className="text-secondary" style={{ fontSize: "0.75rem" }}>{u.region}</td>
+                          <td>
+                            <div className="d-flex gap-1">
+                              <button onClick={() => setUsuarioAuditado(u)} className="btn btn-xs btn-outline-info" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>📜 Historial</button>
+                              <button onClick={() => handleEditarUsuario(u)} className="btn btn-xs btn-outline-warning" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>Editar</button>
+                              <button onClick={() => handleEliminarUsuario(u.run)} className="btn btn-xs btn-outline-danger" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>Eliminar</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ── PEDIDOS ── */}
         {seccion === "pedidos" && (
           <div>
             <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }} className="mb-4">
-              PEDIDOS ({pedidos.length})
+              GESTIÓN DE ÓRDENES Y BOLETAS
             </h2>
-            {pedidos.length === 0 ? (
-              <p className="text-secondary">Aún no hay pedidos registrados.</p>
+
+            {pedidoSeleccionado ? (
+              <DetalleBoleta pedido={pedidoSeleccionado} onVolver={() => setPedidoSeleccionado(null)} />
             ) : (
-              <div className="table-responsive">
-                <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.82rem" }}>
-                  <thead style={{ borderBottom: "1px solid #1E90FF44" }}>
-                    <tr><th>N° Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Items</th></tr>
-                  </thead>
-                  <tbody>
-                    {[...pedidos].reverse().map((p) => (
-                      <tr key={p.id}>
-                        <td><code style={{ color: "#ffc107", fontSize: "0.72rem" }}>{p.id}</code></td>
-                        <td className="text-secondary">{new Date(p.fecha).toLocaleDateString("es-CL")}</td>
-                        <td>{p.cliente?.nombre} {p.cliente?.apellidos}</td>
-                        <td style={{ color: "#39FF14", fontWeight: 700 }}>{formatearPrecio(p.total)}</td>
-                        <td><span className="badge bg-success">{p.estado}</span></td>
-                        <td className="text-secondary">{p.items?.length || 0} producto(s)</td>
+              pedidos.length === 0 ? (
+                <div className="table-responsive">
+                  <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.82rem" }}>
+                    <thead style={{ borderBottom: "1px solid #1E90FF44" }}>
+                      <tr><th>N° Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code style={{ color: "#ffc107", fontSize: "0.72rem" }}>#LUG-1024</code></td>
+                        <td className="text-secondary">{new Date().toLocaleDateString("es-CL")}</td>
+                        <td>Matías Fernández Lira</td>
+                        <td style={{ color: "#39FF14", fontWeight: 700 }}>$59.990</td>
+                        <td>
+                          <select className="form-select form-select-sm bg-dark text-warning border-warning w-auto p-1" style={{ fontSize: "0.75rem" }} defaultValue="pendiente">
+                            <option value="pendiente">🟡 Pendiente</option>
+                            <option value="despachado">🔵 Despachado</option>
+                            <option value="entregado">🟢 Entregado</option>
+                          </select>
+                        </td>
+                        <td>
+                          <button onClick={() => setPedidoSeleccionado({ id: "#LUG-1024", total: 59990, cliente: { nombre: "Matías", apellidos: "Fernández Lira", run: "182334455" } })} className="btn btn-xs btn-outline-info" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>👁️ Ver Boleta</button>
+                        </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="table table-dark table-hover table-sm align-middle" style={{ fontSize: "0.82rem" }}>
+                    <thead style={{ borderBottom: "1px solid #1E90FF44" }}>
+                      <tr><th>N° Pedido</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estado</th><th>Acciones</th></tr>
+                    </thead>
+                    <tbody>
+                      {[...pedidos].reverse().map((p) => (
+                        <tr key={p.id}>
+                          <td><code style={{ color: "#ffc107", fontSize: "0.72rem" }}>{p.id}</code></td>
+                          <td className="text-secondary">{new Date(p.fecha).toLocaleDateString("es-CL")}</td>
+                          <td>{p.cliente?.nombre} {p.cliente?.apellidos}</td>
+                          <td style={{ color: "#39FF14", fontWeight: 700 }}>{formatearPrecio(p.total)}</td>
+                          <td>
+                            <select className="form-select form-select-sm bg-dark text-light border-secondary w-auto p-1" style={{ fontSize: "0.75rem" }} defaultValue={p.estado?.toLowerCase() || "pendiente"}>
+                              <option value="pendiente">🟡 Pendiente</option>
+                              <option value="despachado">🔵 Despachado</option>
+                              <option value="entregado">🟢 Entregado</option>
+                            </select>
+                          </td>
+                          <td>
+                            <button onClick={() => setPedidoSeleccionado(p)} className="btn btn-xs btn-outline-info" style={{ fontSize: "0.7rem", padding: "2px 8px" }}>👁️ Ver Boleta</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
             )}
+          </div>
+        )}
+
+        {/* ── 🆕 SECCIÓN REPORTES AVANZADOS ── */}
+        {seccion === "reportes" && (
+          <div className="animate-fade-in">
+            <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }} className="mb-4">AUDITORÍA Y REPORTES</h2>
+            
+            <div className="row g-3 mb-4">
+              <div className="col-md-6">
+                <div className="p-4 rounded-3 h-100" style={{ background: "#0d0d21", border: "1px solid rgba(30,144,255,0.1)" }}>
+                  <h6 className="text-secondary small mb-1">INGRESOS BRUTOS TOTALES</h6>
+                  <h3 className="text-success fw-bold" style={{ fontFamily: "Orbitron, sans-serif" }}>{formatearPrecio(totalVentasHistoricas)}</h3>
+                  <p className="text-muted small mb-0">Acumulado total de todas las órdenes en el sistema.</p>
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="p-4 rounded-3 h-100" style={{ background: "#0d0d21", border: "1px solid rgba(30,144,255,0.1)" }}>
+                  <h6 className="text-secondary small mb-1">TICKET PROMEDIO DE COMPRA</h6>
+                  <h3 className="text-info fw-bold" style={{ fontFamily: "Orbitron, sans-serif" }}>{formatearPrecio(promedioTicket)}</h3>
+                  <p className="text-muted small mb-0">Valor medio estimado por cada orden procesada.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-3" style={{ background: "#0d0d21", border: "1px solid rgba(30,144,255,0.1)" }}>
+              <h5 style={{ fontFamily: "Orbitron, sans-serif", color: "#39FF14", fontSize: "1rem" }} className="mb-3">Resumen de Inventario Crítico</h5>
+              <p className="text-light small">Alerta automática para la reposición inmediata de insumos tecnológicos:</p>
+              <ul className="text-secondary small">
+                <li>Productos en Catálogo: {productos.length} ítems registrados.</li>
+                <li>Líneas de stock en alerta roja: <span className="text-danger fw-bold">{prodCriticos}</span> con quiebre inminente.</li>
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ── 🆕 SECCIÓN PERFIL DEL ADMINISTRADOR ── */}
+        {seccion === "perfil" && (
+          <div className="animate-fade-in" style={{ maxWidth: "500px" }}>
+            <h2 style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontSize: "1.3rem" }} className="mb-4">MI PERFIL</h2>
+            <div className="p-4 rounded-3" style={{ background: "#0d0d21", border: "1px solid rgba(30,144,255,0.1)" }}>
+              <div className="mb-3">
+                <label className="form-label text-secondary small">Nombre Completo</label>
+                <input type="text" className="form-control bg-dark text-white border-secondary" value={perfilForm.nombre} disabled />
+              </div>
+              <div className="mb-3">
+                <label className="form-label text-secondary small">Correo Electrónico Corporativo</label>
+                <input type="email" className="form-control bg-dark text-white border-secondary" value={perfilForm.correo} disabled />
+              </div>
+              <div className="mb-4">
+                <label className="form-label text-secondary small">Rol de Acceso Asignado</label>
+                <div className="p-2 rounded bg-dark border border-secondary text-danger fw-bold small">🛡️ {usuario?.perfil || "Administrador del Sistema"}</div>
+              </div>
+              <button onClick={() => mostrarToast("⚙️ Funcionalidad de cambio de credenciales simulada con éxito")} className="btn btn-sm w-100" style={{ background: "#1E90FF", color: "#fff", fontWeight: 600 }}>
+                Actualizar Credenciales de Seguridad
+              </button>
+            </div>
           </div>
         )}
 

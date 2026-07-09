@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { ProductosDB } from "../data/db.js";
-import { CATEGORIAS } from "../data/productos.js";
+import { CategoriasDB } from "../data/db.js";
 import ProductCard from "../components/ui/ProductCard.jsx";
 
 const EMOJIS = {
@@ -13,6 +13,7 @@ const EMOJIS = {
   "Mouse": "🖱️",
   "Mousepad": "⬛",
   "Poleras Personalizadas": "👕",
+  "TCG": "🃏"
 };
 
 export default function Productos() {
@@ -20,12 +21,14 @@ export default function Productos() {
   const [todos, setTodos] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [orden, setOrden] = useState("");
+  const [categorias, setCategorias] = useState([]);
 
   // Capturamos la categoría activa desde la URL
   const categoriaActiva = searchParams.get("cat") || "";
 
   useEffect(() => {
     setTodos(ProductosDB.listar());
+    setCategorias(CategoriasDB.listar()); // ← Trae la lista real actualizada con TCG
   }, []);
 
   // 1. Filtrar los productos dinámicamente
@@ -43,15 +46,15 @@ export default function Productos() {
   }
 
   const handleCategoriaClick = (cat) => {
-    if (categoriaActiva === cat) {
-      setSearchParams({}); // Si hace clic en la misma, limpia el filtro y muestra todo
+    if (cat === "Todas" || categoriaActiva === cat) {
+      setSearchParams({}); // Limpia el filtro y muestra todo
     } else {
       setSearchParams({ cat });
     }
   };
 
   return (
-    <div className="container py-5">
+    <div className="container py-5 animate-fade-in">
       <h1 className="fw-bold mb-1" style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF" }}>
         CATÁLOGO DE PRODUCTOS
       </h1>
@@ -59,69 +62,88 @@ export default function Productos() {
         {categoriaActiva ? `Filtrando por: ${categoriaActiva}` : `Mostrando todos los productos (${productosFiltrados.length})`}
       </p>
 
-      {/* ── 🚀 EL BANNER INTERACTIVO AHORA VIVE AQUÍ ARRIBA ── */}
-      <div className="p-4 mb-5 rounded-3" style={{ background: "rgba(13, 13, 33, 0.4)", border: "1px solid rgba(30,144,255,0.1)" }}>
-        <div className="row g-3 justify-content-center">
-          {CATEGORIAS.map((cat) => {
+      {/* ── 🏷️ BARRA DE CATEGORÍAS DINÁMICA REPARADA ── */}
+      <div className="mb-5">
+        <div 
+          className="d-flex flex-wrap justify-content-center gap-2 py-3 px-2 rounded-3" 
+          style={{ background: "#060612", border: "1px solid rgba(30, 144, 255, 0.15)" }}
+        >
+          {/* Botón Estático para Mostrar Todos (Línea rota eliminada) */}
+          <button
+            onClick={() => handleCategoriaClick("Todas")}
+            className="btn px-4 py-2 transition-all"
+            style={{
+              fontFamily: "Orbitron, sans-serif",
+              fontSize: "0.8rem",
+              fontWeight: "700",
+              letterSpacing: "0.5px",
+              borderRadius: "30px",
+              backgroundColor: !categoriaActiva ? "#39FF14" : "transparent",
+              color: !categoriaActiva ? "#000" : "#a3a3c2",
+              border: !categoriaActiva ? "1px solid #39FF14" : "1px solid rgba(255, 255, 255, 0.1)",
+              boxShadow: !categoriaActiva ? "0 0 15px rgba(57, 255, 20, 0.4)" : "none",
+              transition: "all 0.2s ease-in-out"
+            }}
+          >
+            ⚡ Todos ({todos.length})
+          </button>
+
+          {/* Mapeo Dinámico de las Categorías */}
+          {categorias.map((cat) => { 
             const esSeleccionado = categoriaActiva === cat;
             const count = todos.filter((p) => p.categoria === cat).length;
 
             return (
-              <div key={cat} className="col-6 col-sm-4 col-md-3 col-lg-2">
-                <button
-                  onClick={() => handleCategoriaClick(cat)}
-                  className="w-100 text-decoration-none border-0 text-center p-3 rounded-3"
-                  style={{ 
-                    background: "#000000", 
-                    border: esSeleccionado ? "1px solid #39FF14" : "1px solid #1E90FF22", 
-                    boxShadow: esSeleccionado ? "0 0 15px rgba(57,255,20,0.2)" : "none",
-                    transition: "all 0.3s",
-                    cursor: "pointer"
-                  }}
-                  onMouseEnter={(e) => { 
-                    if (!esSeleccionado) {
-                      e.currentTarget.style.borderColor = "#39FF14"; 
-                      e.currentTarget.style.boxShadow = "0 0 15px rgba(57,255,20,0.2)"; 
-                    }
-                  }}
-                  onMouseLeave={(e) => { 
-                    if (!esSeleccionado) {
-                      e.currentTarget.style.borderColor = "#1E90FF22"; 
-                      e.currentTarget.style.boxShadow = "none"; 
-                    }
-                  }}
-                >
-                  <div style={{ fontSize: "1.8rem" }}>{EMOJIS[cat] || "📦"}</div>
-                  <p className="mb-1 mt-2 text-light" style={{ fontSize: "0.75rem", fontWeight: 600 }}>{cat}</p>
-                  <span className="text-secondary" style={{ fontSize: "0.65rem" }}>({count})</span>
-                </button>
-              </div>
+              <button
+                key={cat}
+                onClick={() => handleCategoriaClick(cat)}
+                className="btn px-4 py-2 transition-all"
+                style={{
+                  fontFamily: "Orbitron, sans-serif",
+                  fontSize: "0.8rem",
+                  fontWeight: "700",
+                  letterSpacing: "0.5px",
+                  borderRadius: "30px",
+                  backgroundColor: esSeleccionado ? "#39FF14" : "transparent",
+                  color: esSeleccionado ? "#000" : "#a3a3c2",
+                  border: esSeleccionado ? "1px solid #39FF14" : "1px solid rgba(255, 255, 255, 0.1)",
+                  boxShadow: esSeleccionado ? "0 0 15px rgba(57, 255, 20, 0.4)" : "none",
+                  transition: "all 0.2s ease-in-out"
+                }}
+              >
+                <span className="me-2">{EMOJIS[cat] || "📦"}</span>
+                {cat} <span style={{ fontSize: "0.7rem", opacity: esSeleccionado ? 0.7 : 0.5 }}>({count})</span>
+              </button>
             );
           })}
         </div>
       </div>
 
-      {/* Barra de filtros original (Buscador, Selector de orden, etc.) */}
+      {/* Barra de filtros (Buscador, Selector de orden) */}
       <div className="row g-3 mb-5">
         <div className="col-md-6">
           <input 
             type="text" 
             placeholder="Buscar productos..." 
-            className="form-control"
+            className="form-control bg-dark text-white border-secondary"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
         </div>
         <div className="col-md-6">
-          <select className="form-select" value={orden} onChange={(e) => setOrden(e.target.value)}>
+          <select 
+            className="form-select bg-dark text-white border-secondary" 
+            value={orden} 
+            onChange={(e) => setOrden(e.target.value)}
+          >
             <option value="">Ordenar por</option>
             <option value="precio-asc">Precio: Menor a Mayor</option>
-            <option value="precio-desc">Precio: Mayor a Menor</option>
+            <option value="precio-desc">Precio: Mayor a Minor</option>
           </select>
         </div>
       </div>
 
-      {/* Grid de productos */}
+      {/* Grid de productos funcional */}
       {productosFiltrados.length === 0 ? (
         <div className="text-center py-5">
           <p style={{ fontSize: "3rem" }}>📦</p>

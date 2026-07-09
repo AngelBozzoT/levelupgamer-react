@@ -253,3 +253,31 @@ const USUARIOS_SEMILLA = [
     fechaNacimiento: "",
   },
 ];
+
+export const CategoriasDB = {
+  listar: () => {
+    const datos = localStorage.getItem("levelup_categorias");
+    if (!datos) {
+      // Si está vacío, cargamos las categorías iniciales por defecto de tu semilla
+      const iniciales = ["Juegos de Mesa", "Accesorios", "Consolas", "Computadores Gamers", "Sillas Gamers", "Mouse", "Mousepad", "Poleras Personalizadas"];
+      localStorage.setItem("levelup_categorias", JSON.stringify(iniciales));
+      return iniciales;
+    }
+    return JSON.parse(datos);
+  },
+  crear: (nuevaCategoria) => {
+    const actuales = CategoriasDB.listar();
+    if (actuales.map(c => c.toLowerCase()).includes(nuevaCategoria.toLowerCase())) {
+      throw new Error("La categoría ya existe");
+    }
+    actuales.push(nuevaCategoria);
+    localStorage.setItem("levelup_categorias", JSON.stringify(actuales));
+    return actuales;
+  },
+  eliminar: (categoriaAEliminar) => {
+    let actuales = CategoriasDB.listar();
+    actuales = actuales.filter(c => c !== categoriaAEliminar);
+    localStorage.setItem("levelup_categorias", JSON.stringify(actuales));
+    return actuales;
+  }
+};

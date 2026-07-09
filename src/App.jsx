@@ -59,8 +59,8 @@ export default function App() {
                 <Route path="/ofertas" element={<Ofertas />} />
                 <Route path="/carrito" element={<Carrito />} />
                 <Route path="/checkout" element={<Checkout />} />
-                <Route path="/checkout/exito" element={<CheckoutExito />} />
-                <Route path="/checkout/error" element={<CheckoutError />} />
+                <Route path="/checkout-exito" element={<CheckoutExito />} />
+                <Route path="/checkout-error" element={<CheckoutError />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/registro" element={<Registro />} />
                 <Route path="/nosotros" element={<Nosotros />} />

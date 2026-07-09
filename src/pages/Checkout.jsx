@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
-import { PedidosDB } from "../data/db.js";
+import { PedidosDB, ProductosDB } from "../data/db.js"; // ← Importamos ProductosDB para validar
 import { formatearPrecio } from "../data/productos.js";
 
 const REGIONES = [
@@ -60,6 +60,20 @@ export default function Checkout() {
     if (Object.keys(e2).length > 0) { setErrores(e2); return; }
 
     setProcesando(true);
+
+    // ── 🔥 CAPA DE AUDITORÍA: CONTROL DE STOCK INMEDIATO ──
+    const productosEnDB = ProductosDB.listar();
+    for (const item of items) {
+      const prodReal = productosEnDB.find((p) => p.codigo === item.codigo);
+      // Si la cantidad solicitada en el carrito supera el inventario del LocalStorage, rechazamos
+      if (prodReal && item.cantidad > prodReal.stock) {
+        setTimeout(() => {
+          setProcesando(false);
+          navigate("/checkout-error"); // Desvío directo sin tocar la pasarela
+        }, 800);
+        return;
+      }
+    }
     
     // Simular proceso de pago (2 seg)
     setTimeout(() => {
@@ -68,6 +82,15 @@ export default function Checkout() {
 
       if (pagoExitoso) {
         try {
+          // Descontar inventario en la simulación de DB antes de crear la orden
+          items.forEach((item) => {
+            const prodReal = productosEnDB.find((p) => p.codigo === item.codigo);
+            if (prodReal) {
+              const nuevoStock = Math.max(0, prodReal.stock - item.cantidad);
+              ProductosDB.actualizar(prodReal.codigo, { ...prodReal, stock: nuevoStock });
+            }
+          });
+
           const pedido = PedidosDB.crear({
             items: items.map((i) => ({ codigo: i.codigo, titulo: i.producto.titulo, cantidad: i.cantidad, precio: i.precioFinal })),
             total,
@@ -75,14 +98,14 @@ export default function Checkout() {
             envio: { region: form.region, comuna: form.comuna, direccion: form.direccion },
             metodoPago: form.metodoPago,
           });
+
           vaciar();
-          navigate(`/checkout/exito?id=${pedido.id}`);
+          // 🔀 CORREGIDO: Redirección con guion alineada con App.jsx
+          navigate(`/checkout-exito?id=${pedido.id}`);
         } catch {
-          // Si hay una falla de almacenamiento en la Base de Datos simulada
           navigate("/checkout-error");
         }
       } else {
-        // ❌ El banco simulado rechazó la transacción por fondos o red, enviamos a tu componente de error
         navigate("/checkout-error");
       }
       setProcesando(false);
@@ -169,7 +192,7 @@ export default function Checkout() {
               </h5>
               <div className="d-flex flex-wrap gap-3">
                 {[["debito", "💳 Débito"], ["credito", "🏦 Crédito"], ["transferencia", "📲 Transferencia"]].map(([val, label]) => (
-                  <label key={val} className="d-flex align-items-center gap-2 p-3 rounded-2 cursor-pointer"
+                  <label key={val} className="d-flex align-items-center gap-2 p-3 rounded-2"
                     style={{ background: form.metodoPago === val ? "rgba(30,144,255,0.15)" : "#05050f", border: `1px solid ${form.metodoPago === val ? "#1E90FF" : "#2a2a5a"}`, cursor: "pointer" }}>
                     <input type="radio" name="metodoPago" value={val} checked={form.metodoPago === val} onChange={handleChange} className="form-check-input" />
                     <span className="text-light">{label}</span>

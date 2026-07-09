@@ -120,7 +120,7 @@ export const CATALOGO_SEMILLA = [
     descuento: 0,
     stock: 50,
     stockCritico: 10,
-    imagen: "/polera_levelup.png", // <-- Con la barra absoluta para la carpeta public
+    imagen: import.meta.env.BASE_URL + "polera_levelup.png", 
     descripcion: "Camiseta de algodón premium con tu Gamertag o logotipo en alta definición.",
     destacado: false,
   },

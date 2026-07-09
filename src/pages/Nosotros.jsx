@@ -1,7 +1,10 @@
+import { useEffect } from "react";
+import imagenLevelUp from "/imagenlevelup.png"; // ← Importamos la imagen usando la infraestructura de Vite
+
 export default function Nosotros() {
   const pilares = [
     { emoji: "🎯", titulo: "MISIÓN", desc: "Proveer el mejor hardware y periféricos para potenciar las habilidades de cada jugador.", color: "#1E90FF" },
-    { emoji: "⚡", titulo: "VISIÓN", desc: "Ser el ecosistema gamer más grande y respected de Latinoamérica.", color: "#39FF14" },
+    { emoji: "⚡", titulo: "VISIÓN", desc: "Ser el ecosistema gamer más grande y respetado de Latinoamérica.", color: "#39FF14" },
     { emoji: "👥", titulo: "COMUNIDAD", desc: "Fomentar un espacio donde los gamers puedan compartir, aprender y competir.", color: "#1E90FF" },
     { emoji: "🛡️", titulo: "CALIDAD", desc: "Solo trabajamos con marcas oficiales y ofrecemos garantía real en Chile.", color: "#ffc107" },
   ];
@@ -24,7 +27,7 @@ export default function Nosotros() {
       <div className="container pb-5">
         {/* Sección Historia + Imagen de Comunidad */}
         <div className="row align-items-center gy-5 mb-5 pb-4">
-          <div className="col-md-6">
+          <div className="col-md-6 text-start"> {/* Forzamos alineación limpia a la izquierda */}
             <h3 className="mb-4" style={{ fontFamily: "Orbitron, sans-serif", color: "#1E90FF", fontWeight: 700, letterSpacing: 1 }}>
               NUESTRA HISTORIA
             </h3>
@@ -37,12 +40,18 @@ export default function Nosotros() {
           </div>
 
           <div className="col-md-6 text-center">
+            {/* Removimos el contenedor 'bg-white' para un look puramente oscuro e integrado */}
             <div 
-              className="p-2 bg-white rounded-3 d-inline-block" 
-              style={{ boxShadow: "0 0 30px rgba(30,144,255,0.15)", maxWidth: "100%" }}
+              className="p-1 rounded-3 d-inline-block" 
+              style={{ 
+                background: "rgba(30,144,255,0.05)", 
+                border: "1px solid rgba(30,144,255,0.2)",
+                boxShadow: "0 0 30px rgba(30,144,255,0.15)", 
+                maxWidth: "100%" 
+              }}
             >
               <img 
-                src="/imagenlevelup.png" 
+                src={imagenLevelUp} // ← Ahora usa la variable inyectada dinámicamente
                 alt="Comunidad Level-Up Gamer" 
                 className="img-fluid rounded-2"
                 style={{ maxHeight: "380px", width: "100%", objectFit: "cover" }}
@@ -117,7 +126,7 @@ export default function Nosotros() {
         {/* Tarjetas de Eventos */}
         <div className="row g-3">
           {/* Evento 1: FestiGame */}
-          <div className="col-md-6">
+          <div className="col-md-6 text-start">
             <div className="rounded-3 p-3 h-100" style={{ background: "rgba(10, 10, 22, 0.6)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <h5 style={{ color: "#39FF14", fontSize: "0.95rem", fontWeight: 700, fontFamily: "Orbitron, sans-serif" }}>
                 🎮 FestiGame 2026
@@ -128,7 +137,7 @@ export default function Nosotros() {
           </div>
 
           {/* Evento 2: Torneo Duoc/Inacap */}
-          <div className="col-md-6">
+          <div className="col-md-6 text-start">
             <div className="rounded-3 p-3 h-100" style={{ background: "rgba(10, 10, 22, 0.6)", border: "1px solid rgba(255,255,255,0.05)" }}>
               <h5 style={{ color: "#39FF14", fontSize: "0.95rem", fontWeight: 700, fontFamily: "Orbitron, sans-serif" }}>
                 🔥 Torneo de Esports Duoc/Inacap

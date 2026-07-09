@@ -1,50 +1,53 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export default function CheckoutError() {
+  const navigate = useNavigate();
+
   return (
-    <div className="container py-5 text-center">
-      <div style={{ maxWidth: 600, margin: "0 auto" }}>
-        <div style={{ fontSize: "5rem", marginBottom: 16 }}>❌</div>
-        <h1 style={{ fontFamily: "Orbitron, sans-serif", color: "#ff4444", fontSize: "clamp(1.5rem,4vw,2.5rem)", textShadow: "0 0 15px rgba(255,68,68,0.3)" }}>
-          ERROR AL PROCESAR EL PAGO
-        </h1>
-        <p className="text-secondary mb-4 lead" style={{ fontSize: "0.95rem" }}>
-          No pudimos completar tu compra. Tu carrito sigue intacto.
-        </p>
-
-        <div className="rounded-3 p-4 mb-4" style={{ background: "rgba(26, 8, 8, 0.5)", border: "1px solid rgba(255, 68, 68, 0.2)" }}>
-          <p className="text-secondary mb-0 small" style={{ lineHeight: 1.7 }}>
-            🔄 Posibles causas: fondos insuficientes, error de red o tarjeta rechazada.<br />
-            Intenta de nuevo o usa otro método de pago.
-          </p>
-        </div>
-
-        <div className="d-flex gap-3 justify-content-center flex-wrap">
-          <Link 
-            to="/checkout" 
-            className="btn px-4 py-2" 
-            style={{ 
-              background: "transparent", 
-              border: "2px solid #ff4444", 
-              color: "#ff4444", 
-              fontWeight: 700,
-              fontSize: "0.9rem",
-              transition: "all 0.3s"
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "#ff4444"; e.currentTarget.style.color = "#fff"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#ff4444"; }}
-          >
-            Intentar de nuevo
-          </Link>
-          <Link 
-            to="/carrito" 
-            className="btn px-4 py-2 btn-outline-secondary text-light"
-            style={{ fontSize: "0.9rem" }}
-          >
-            Revisar Carrito
-          </Link>
-        </div>
+    <div className="container d-flex flex-column align-items-center justify-content-center text-center animate-fade-in" style={{ minHeight: "75vh" }}>
+      
+      {/* Icono Neón de Advertencia */}
+      <div className="mb-4" style={{ fontSize: "4.5rem", filter: "drop-shadow(0 0 15px #ff4444)" }}>
+        ❌
       </div>
+
+      {/* Títulos de Error de Negocio */}
+      <h1 style={{ fontFamily: "Orbitron, sans-serif", color: "#ff4444", fontWeight: 700, letterSpacing: "1px" }} className="mb-2">
+        TRANSACCIÓN RECHAZADA
+      </h1>
+      
+      <p className="text-light px-3 mb-4" style={{ maxWidth: "500px", fontSize: "0.95rem" }}>
+        No se pudo procesar la compra en este momento. Esto puede deberse a fondos insuficientes, un problema de conexión con el proveedor de pagos o datos del formulario inválidos.
+      </p>
+
+      {/* Tarjeta de Detalles Técnicos Simulados para QA */}
+      <div className="p-3 rounded-3 mb-4 text-start" style={{ background: "#1a0808", border: "1px solid #ff444433", maxWidth: "450px", width: "100%" }}>
+        <small className="d-block text-secondary" style={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+          <span className="text-danger fw-bold">CÓDIGO_ERROR:</span> LUG_PAYMENT_REJECTED_402<br />
+          <span className="text-danger fw-bold">ESTADO:</span> Transacción fallida (Simulación localStorage)<br />
+          <span className="text-danger fw-bold">ACCIÓN:</span> Por favor, revisa los datos de facturación e intenta nuevamente.
+        </small>
+      </div>
+
+      {/* Botones de Redirección Funcionales */}
+      <div className="d-flex flex-wrap gap-3 justify-content-center">
+        <button 
+          onClick={() => navigate("/carrito")} 
+          className="btn px-4 py-2 text-dark"
+          style={{ background: "#ffc107", fontFamily: "Orbitron, sans-serif", fontWeight: 700, borderRadius: "4px" }}
+        >
+          🔄 Volver al Carrito
+        </button>
+        
+        <button 
+          onClick={() => navigate("/")} 
+          className="btn px-4 py-2 btn-outline-light"
+          style={{ fontFamily: "Orbitron, sans-serif", fontWeight: 600, borderRadius: "4px" }}
+        >
+          🏠 Ir al Home
+        </button>
+      </div>
+
     </div>
   );
 }

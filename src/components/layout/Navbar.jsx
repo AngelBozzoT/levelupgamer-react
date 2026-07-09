@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import logoGamer from "/Logo.png"; // ← Ya lo importas bien acá
 
 export default function Navbar() {
   const { cantidadTotal } = useCart();
@@ -18,12 +19,12 @@ export default function Navbar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark sticky-top" style={{ background: "rgba(5,5,15,0.97)", borderBottom: "1px solid #1E90FF33" }}>
       <div className="container">
-        {/* ── LOGO APUNTANDO A LA CARPETA PUBLIC ── */}
+        {/* ── LOGO CON RUTA AUTOMATIZADA POR VITE ── */}
         <Link to="/" className="navbar-brand d-flex align-items-center gap-2">
           <img 
-            src="/Logo.png" 
+            src={logoGamer} // ← Cambiado de "/Logo.png" a {logoGamer}
             alt="Level-Up Gamer Logo" 
-            style={{ height: "42px", objectFit: "contain" }} 
+            style={{ height: "40px", width: "auto" }}
           />
           <span style={{ fontFamily: "Orbitron, sans-serif", color: "#39FF14", fontSize: "1.1rem", letterSpacing: 2 }}>
             LEVEL-UP GAMER
@@ -44,6 +45,13 @@ export default function Navbar() {
             <li className="nav-item"><NavLink to="/nosotros" className={navLinkClass}>Nosotros</NavLink></li>
             <li className="nav-item"><NavLink to="/blogs" className={navLinkClass}>Blog</NavLink></li>
             <li className="nav-item"><NavLink to="/contacto" className={navLinkClass}>Contacto</NavLink></li>
+            
+            {/* ⚙️ Acceso directo visible en el menú principal si eres Admin */}
+            {esAdmin && (
+              <li className="nav-item">
+                <NavLink to="/admin" className="nav-link fw-semibold text-info">⚙️ Admin</NavLink>
+              </li>
+            )}
           </ul>
 
           {/* Botones lado derecho */}
